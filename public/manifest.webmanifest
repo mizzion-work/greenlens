@@ -1,0 +1,11 @@
+{
+  "name": "GreenLens AI",
+  "short_name": "GreenLens",
+  "description": "เปลี่ยนมุมร้าง ให้เป็นปอดของเมืองด้วย AI",
+  "lang": "th",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f8f1",
+  "theme_color": "#f3f8f1",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

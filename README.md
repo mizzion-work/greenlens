@@ -1,200 +1,90 @@
-Welcome to your new TanStack Start app!
+# GreenLens AI
 
-# Getting Started
+> เปลี่ยนมุมร้าง ให้เป็นปอดของเมืองด้วย AI
 
-To run this application:
+Take a photo of an empty balcony, yard or rooftop. GreenLens AI then:
+
+1. **Analyses the space** (Gemini vision) and pre-fills space type, sunlight and size.
+2. **Picks plants** from a curated list of 15 Thai nursery plants, based on light, size, pets and care level.
+3. **Edits your real photo** (Gemini image model) so you can compare Before/After with a slider.
+4. **Estimates impact**: cooling, PM2.5 capture, leaf area and budget. It also shows live PM2.5, temperature and UV for your area from Open-Meteo.
+5. Links to Shopee/Lazada for each plant and to nurseries near you on Google Maps.
+
+Everything runs in **one Cloudflare Worker**: TanStack Start renders the pages, and its server functions call Gemini and Open-Meteo. There is no separate backend and no database.
+
+If no Gemini key is configured, or a call fails, the app still works. It draws an illustrated preview on the device instead of the AI image.
+
+## Stack
+
+- [TanStack Start](https://tanstack.com/start) (React 19, file routes, server functions)
+- Cloudflare Workers via `@cloudflare/vite-plugin`
+- Tailwind CSS v4 + hand-written CSS tokens (light/dark)
+- Google Gemini REST API (`generateContent`)
+- Open-Meteo air quality + weather (no key)
+- Vitest for unit tests
+
+## Run locally
 
 ```bash
 npm install
-npm run dev
+cp .dev.vars.example .dev.vars   # then put your key in GEMINI_API_KEY
+npm run dev                      # http://localhost:3000
 ```
 
-# Building For Production
-
-To build this application for production:
+Get a Gemini API key at <https://aistudio.google.com/apikey>. You can leave the key empty: the app runs in preview mode.
 
 ```bash
-npm run build
+npm test          # unit tests (recommender, impact, prompts, Gemini parsing)
+npx tsc --noEmit  # typecheck
 ```
 
-## Styling
+## Deploy to Cloudflare
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-
-## Deploy to Cloudflare Workers
-
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
-
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
-
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
+```bash
+npx wrangler login
+npx wrangler secret put GEMINI_API_KEY
+npm run deploy
 ```
 
-Then anywhere in your JSX you can use it like so:
+Non-secret settings live in `wrangler.jsonc`:
 
-```tsx
-<Link to="/about">About</Link>
+| Setting | Default | Purpose |
+|---|---|---|
+| `GEMINI_IMAGE_MODEL` | `gemini-3.1-flash-image` | Edits the photo |
+| `GEMINI_TEXT_MODEL` | `gemini-3.6-flash` | Analyses the space (JSON output) |
+| `GENERATE_LIMITER` | 4 / minute / IP | Workers rate-limit binding for image generation |
+| `ANALYZE_LIMITER` | 12 / minute / IP | Rate limit for analysis |
+
+Gemini model names change often. If calls start failing with 404, check <https://aistudio.google.com/docs/models> and update the two vars.
+
+> **Cost note:** each "สร้างภาพ" (generate) costs one Gemini image generation, and each "ลองแบบอื่น" (try another) costs another. The per-IP rate limits stop casual abuse, not a determined attacker. For a public launch, also set a budget alert in Google Cloud, or add Cloudflare Turnstile.
+
+## Project layout
+
+```
+src/
+  lib/            pure logic, unit-tested
+    plants.ts       plant database (Thai names, light, water, pet safety, price)
+    recommend.ts    scoring + combination picker ("variant" = next-best mix)
+    impact.ts       cooling / PM2.5 / leaf-area / budget estimate
+    prompts.ts      Gemini prompts + analysis JSON schema
+    air-quality.ts  Thai PCD PM2.5 bands
+  server/
+    gemini.ts       tiny REST client + response parsing
+    functions.ts    TanStack server functions (run inside the Worker)
+  client/image.ts   resize/strip-EXIF, sample photo, on-device preview
+  state/garden.tsx  app state (React context, persisted to sessionStorage)
+  routes/           /  (capture) · /result (before/after) · /plan (impact) · /about
 ```
 
-This will create a link that will navigate to the `/about` route.
+## Privacy
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+- The browser resizes photos to ≤1280 px and re-encodes them, which strips EXIF/GPS data, before upload.
+- Photos go to Gemini for processing and are never stored by GreenLens.
+- Results live only in the tab's `sessionStorage`.
+- Precise location is used only when the user taps "ใช้ตำแหน่งที่แม่นยำ" (use my precise location). Otherwise the app uses Cloudflare's approximate request location.
 
-### Using A Layout
+## Caveats
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+- The impact numbers are estimates for comparison, not measurements. See `src/lib/impact.ts` and the in-app About page for the method.
+- The Open-Meteo free API is for non-commercial use. A commercial launch needs their paid plan.

@@ -1,87 +1,321 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import {
+  ArrowRight,
+  Building2,
+  Camera,
+  CircleAlert,
+  ImagePlus,
+  Leaf,
+  LoaderCircle,
+  PawPrint,
+  Ruler,
+  ScanSearch,
+  Sparkles,
+  Sprout,
+  Sun,
+  TriangleAlert,
+  Upload,
+} from 'lucide-react'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { prepareImage, sampleImage, type PreparedImage } from '../client/image'
+import { HandArrow, HeroArt } from '../components/art'
+import { SelectField } from '../components/SelectField'
+import type { Light, SpaceSize, SpaceType } from '../lib/types'
+import { useGarden } from '../state/garden'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({ component: CapturePage })
 
-function App() {
+const SCAN_STEPS = [
+  'AI กำลังวิเคราะห์พื้นที่…',
+  'กำลังเลือกต้นไม้ที่เหมาะกับแสงแดด…',
+  'กำลังจัดวางกระถาง…',
+  'กำลังเก็บรายละเอียดภาพ…',
+]
+
+const SPACE_OPTIONS: { value: SpaceType; label: string }[] = [
+  { value: 'balcony', label: 'ระเบียงคอนโด' },
+  { value: 'yard', label: 'ลานหน้าบ้าน' },
+  { value: 'rooftop', label: 'ดาดฟ้า' },
+]
+const LIGHT_OPTIONS: { value: Light; label: string }[] = [
+  { value: 'full', label: 'แดดจัด · แดดส่องตรง 6 ชม.ขึ้นไป' },
+  { value: 'part', label: 'แดดรำไร · แดดส่อง 3–6 ชม.' },
+  { value: 'shade', label: 'ร่มเงา · แดดน้อยกว่า 3 ชม.' },
+]
+const SIZE_OPTIONS: { value: SpaceSize; label: string }[] = [
+  { value: 'S', label: 'เล็ก · น้อยกว่า 4 ตร.ม.' },
+  { value: 'M', label: 'กลาง · 4–8 ตร.ม.' },
+  { value: 'L', label: 'ใหญ่ · มากกว่า 8 ตร.ม.' },
+]
+
+function CapturePage() {
+  const g = useGarden()
+  const navigate = useNavigate()
+  const cameraRef = useRef<HTMLInputElement>(null)
+  const libraryRef = useRef<HTMLInputElement>(null)
+  const [loadingPhoto, setLoadingPhoto] = useState(false)
+  const [photoError, setPhotoError] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const [step, setStep] = useState(0)
+  const [genError, setGenError] = useState(false)
+
+  useEffect(() => {
+    if (!g.generating) return
+    setStep(0)
+    const t = setInterval(() => setStep((s) => Math.min(s + 1, SCAN_STEPS.length - 1)), 3500)
+    return () => clearInterval(t)
+  }, [g.generating])
+
+  async function loadPhoto(load: () => Promise<PreparedImage>) {
+    setPhotoError(null)
+    setLoadingPhoto(true)
+    try {
+      g.setPhoto(await load())
+    } catch {
+      setPhotoError('เปิดรูปนี้ไม่ได้ ลองเลือกรูปแบบ JPG หรือ PNG')
+    } finally {
+      setLoadingPhoto(false)
+    }
+  }
+
+  function onFile(file: File | undefined) {
+    if (!file) return
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) {
+      setPhotoError('กรุณาเลือกไฟล์รูปภาพ')
+      return
+    }
+    void loadPhoto(() => prepareImage(file))
+  }
+
+  function onDrop(e: DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    onFile(e.dataTransfer.files[0])
+  }
+
+  async function onGenerate() {
+    setGenError(false)
+    const ok = await g.generate(0)
+    if (ok) navigate({ to: '/result' })
+    else setGenError(true)
+  }
+
+  const analysis = g.analysis
+  const ai = analysis.status === 'done' && analysis.analysis.isOutdoorSpace ? analysis.analysis : null
+
   return (
-    <main className="page-wrap px-4 pb-8 pt-14">
-      <section className="island-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,184,178,0.32),transparent_66%)]" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
-        <p className="island-kicker mb-3">TanStack Start Base Template</p>
-        <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
-          Start simple, ship quickly.
+    <main>
+      <section className="hero">
+        <span className="hand">
+          ถ่ายพื้นที่ว่าง
+          <br />
+          เปลี่ยนเป็นสวน
+        </span>
+        <HandArrow style={{ position: 'absolute', right: 70, top: 30, zIndex: 3 }} />
+        <HeroArt className="hero-art" />
+        <h1>
+          เปลี่ยนมุมร้าง
+          <br />
+          ให้เป็นปอดของเมือง
         </h1>
-        <p className="mb-8 max-w-2xl text-base text-[var(--sea-ink-soft)] sm:text-lg">
-          This base starter intentionally keeps things light: two routes, clean
-          structure, and the essentials you need to build from scratch.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/about"
-            className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-[var(--lagoon-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
-          >
-            About This Starter
-          </a>
-          <a
-            href="https://tanstack.com/router"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-[rgba(23,58,64,0.2)] bg-white/50 px-5 py-2.5 text-sm font-semibold text-[var(--sea-ink)] no-underline transition hover:-translate-y-0.5 hover:border-[rgba(23,58,64,0.35)]"
-          >
-            Router Guide
-          </a>
+        <p>ถ่ายรูปพื้นที่ว่าง แล้วให้ AI จัดสวนฟอกอากาศที่เหมาะกับบ้านคุณให้ดูทันที</p>
+      </section>
+
+      <div
+        className={`upload${g.photo ? ' has-photo' : ''}${dragging ? ' dragging' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDragging(true)
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+      >
+        {g.photo ? (
+          <>
+            <img src={g.photo.dataUrl} alt="ภาพพื้นที่ของคุณ" />
+            {!g.generating && (
+              <button type="button" className="photo-chip" onClick={() => libraryRef.current?.click()}>
+                <ImagePlus size={15} /> เปลี่ยนรูป
+              </button>
+            )}
+            {!g.generating && analysis.status === 'running' && (
+              <div className="analysis-chip" role="status">
+                <LoaderCircle size={17} className="animate-spin" />
+                AI กำลังดูพื้นที่ของคุณ เพื่อตั้งค่าด้านล่างให้อัตโนมัติ…
+              </div>
+            )}
+            {!g.generating && ai && (
+              <div className="analysis-chip" role="status">
+                <ScanSearch size={17} />
+                <span>
+                  <b>AI มองเห็น:</b> {ai.summaryTh}
+                </span>
+              </div>
+            )}
+            {!g.generating && analysis.status === 'done' && !analysis.analysis.isOutdoorSpace && (
+              <div className="analysis-chip warn" role="status">
+                <TriangleAlert size={17} />
+                <span>ภาพนี้อาจไม่ใช่พื้นที่สำหรับวางต้นไม้ ลองถ่ายระเบียง ลานบ้าน หรือดาดฟ้าให้เห็นพื้นชัด ๆ</span>
+              </div>
+            )}
+            {g.generating && (
+              <div className="scan" role="status" aria-live="polite">
+                <span className="scan-label">
+                  <Sparkles size={15} /> {SCAN_STEPS[step]}
+                </span>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="lens">
+              {loadingPhoto ? <LoaderCircle size={30} className="animate-spin" /> : <Camera size={32} strokeWidth={1.8} />}
+            </div>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => cameraRef.current?.click()}
+              disabled={loadingPhoto}
+            >
+              ถ่ายรูปพื้นที่ว่างของคุณ
+            </button>
+            <div>
+              <button type="button" className="alt-action" onClick={() => libraryRef.current?.click()}>
+                <Upload size={15} /> หรือ อัปโหลดรูปจากแกลเลอรี
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          onFile(e.target.files?.[0])
+          e.target.value = ''
+        }}
+      />
+      <input
+        ref={libraryRef}
+        type="file"
+        accept="image/*,.heic,.heif"
+        hidden
+        onChange={(e) => {
+          onFile(e.target.files?.[0])
+          e.target.value = ''
+        }}
+      />
+
+      {!g.photo && (
+        <div className="link-row" style={{ marginTop: 10 }}>
+          <button type="button" onClick={() => void loadPhoto(sampleImage)}>
+            ไม่มีรูปตอนนี้? ลองใช้ภาพตัวอย่างระเบียงคอนกรีต
+          </button>
         </div>
-      </section>
+      )}
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          [
-            'Type-Safe Routing',
-            'Routes and links stay in sync across every page.',
-          ],
-          [
-            'Server Functions',
-            'Call server code from your UI without creating API boilerplate.',
-          ],
-          [
-            'Streaming by Default',
-            'Ship progressively rendered responses for faster experiences.',
-          ],
-          [
-            'Tailwind Native',
-            'Design quickly with utility-first styling and reusable tokens.',
-          ],
-        ].map(([title, desc], index) => (
-          <article
-            key={title}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
-          >
-            <h2 className="mb-2 text-base font-semibold text-[var(--sea-ink)]">
-              {title}
-            </h2>
-            <p className="m-0 text-sm text-[var(--sea-ink-soft)]">{desc}</p>
-          </article>
-        ))}
-      </section>
+      {photoError && (
+        <div className="notice warn" role="alert">
+          <CircleAlert size={17} />
+          {photoError}
+        </div>
+      )}
 
-      <section className="island-shell mt-8 rounded-2xl p-6">
-        <p className="island-kicker mb-2">Quick Start</p>
-        <ul className="m-0 list-disc space-y-2 pl-5 text-sm text-[var(--sea-ink-soft)]">
-          <li>
-            Edit <code>src/routes/index.tsx</code> to customize the home page.
-          </li>
-          <li>
-            Update <code>src/components/Header.tsx</code> and{' '}
-            <code>src/components/Footer.tsx</code> for brand links.
-          </li>
-          <li>
-            Add routes in <code>src/routes</code> and tweak visual tokens in{' '}
-            <code>src/styles.css</code>.
-          </li>
-        </ul>
-      </section>
+      <div className="section-head">
+        <h2>
+          <Leaf size={20} /> ตั้งค่าข้อมูลพื้นที่
+        </h2>
+        <span className="hand" style={{ transform: 'rotate(-5deg)', textAlign: 'right', maxWidth: 150 }}>
+          ข้อมูลยิ่งละเอียด
+          <br />
+          AI ยิ่งแนะนำได้แม่นยำ!
+        </span>
+      </div>
+
+      <SelectField<SpaceType>
+        label="ประเภทพื้นที่"
+        Icon={Building2}
+        value={g.input.spaceType}
+        options={SPACE_OPTIONS}
+        aiSuggested={ai?.spaceType === g.input.spaceType}
+        onChange={(spaceType) => g.setInput({ spaceType })}
+      />
+      <SelectField<Light>
+        label="ทิศทางและแสงแดด"
+        Icon={Sun}
+        value={g.input.light}
+        options={LIGHT_OPTIONS}
+        aiSuggested={ai?.light === g.input.light}
+        onChange={(light) => g.setInput({ light })}
+      />
+      <SelectField<SpaceSize>
+        label="ขนาดพื้นที่โดยประมาณ"
+        Icon={Ruler}
+        value={g.input.size}
+        options={SIZE_OPTIONS}
+        aiSuggested={ai?.size === g.input.size}
+        onChange={(size) => g.setInput({ size })}
+      />
+
+      <div className="pill-toggles">
+        <button
+          type="button"
+          className="pill-toggle"
+          aria-pressed={g.input.hasPets}
+          onClick={() => g.setInput({ hasPets: !g.input.hasPets })}
+        >
+          <PawPrint size={15} /> มีน้องหมาน้องแมว
+        </button>
+        <button
+          type="button"
+          className="pill-toggle"
+          aria-pressed={g.input.beginner}
+          onClick={() => g.setInput({ beginner: !g.input.beginner })}
+        >
+          <Sprout size={15} /> มือใหม่หัดปลูก
+        </button>
+      </div>
+      {g.input.hasPets && <p className="fine" style={{ margin: '8px 2px 0' }}>เลือกเฉพาะต้นไม้ที่ไม่เป็นพิษต่อสัตว์เลี้ยง</p>}
+
+      <button type="button" className="cta" onClick={onGenerate} disabled={!g.photo || g.generating || loadingPhoto}>
+        <span className="cta-icon">
+          {g.generating ? <LoaderCircle size={22} className="animate-spin" /> : <Sparkles size={22} />}
+        </span>
+        <span className="cta-text">
+          <b>{g.generating ? 'กำลังจัดสวน…' : 'Let AI Generate'}</b>
+          <small>{g.photo ? '(เริ่มจัดสวนเลย)' : 'ถ่ายหรืออัปโหลดรูปก่อนนะ'}</small>
+        </span>
+        <ArrowRight size={22} />
+      </button>
+
+      {genError && (
+        <div className="notice warn" role="alert">
+          <CircleAlert size={17} />
+          สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้ง
+        </div>
+      )}
+
+      <p className="fine" style={{ textAlign: 'center', margin: '14px 8px 0' }}>
+        {g.aiEnabled
+          ? 'รูปถูกย่อขนาดและลบข้อมูลตำแหน่ง (GPS) ก่อนส่งให้ Google Gemini ประมวลผล GreenLens ไม่เก็บรูปไว้บนเซิร์ฟเวอร์'
+          : 'โหมดภาพจำลอง: รูปของคุณถูกประมวลผลบนเครื่องนี้เท่านั้น ไม่ถูกอัปโหลด'}
+      </p>
+
+      <div className="link-row">
+        <Link to="/about">วิธีทำงาน</Link>
+        <span className="sep">|</span>
+        <Link to="/about" hash="method">
+          วิธีคำนวณ
+        </Link>
+        <span className="sep">|</span>
+        <Link to="/about" hash="privacy">
+          ความเป็นส่วนตัว
+        </Link>
+      </div>
     </main>
   )
 }

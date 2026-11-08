@@ -1,61 +1,73 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import Footer from '../components/Footer'
-import Header from '../components/Header'
+import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
+import { AppHeader } from '../components/AppHeader'
+import { BottomNav } from '../components/BottomNav'
+import { Decor } from '../components/art'
+import { getAiStatus } from '../server/functions'
+import { GardenProvider } from '../state/garden'
 
 import appCss from '../styles.css?url'
 
-const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`
+const TITLE = 'GreenLens AI — เปลี่ยนมุมร้าง ให้เป็นปอดของเมือง'
+const DESCRIPTION =
+  'ถ่ายรูประเบียงหรือลานบ้าน ให้ AI จัดสวนฟอกอากาศให้ดูแบบ Before/After พร้อมรายการต้นไม้ที่เหมาะกับแสงแดด และผลประเมินการลดความร้อนและฝุ่น PM2.5'
 
 export const Route = createRootRoute({
+  loader: () => getAiStatus(),
+  // AI availability only changes on redeploy; don't refetch on every navigation.
+  staleTime: Infinity,
   head: () => ({
     meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'TanStack Start Starter',
-      },
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+      { title: TITLE },
+      { name: 'description', content: DESCRIPTION },
+      { name: 'theme-color', content: '#f3f8f1' },
+      { name: 'color-scheme', content: 'light' },
+      { property: 'og:title', content: TITLE },
+      { property: 'og:description', content: DESCRIPTION },
+      { property: 'og:type', content: 'website' },
     ],
     links: [
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+      { rel: 'manifest', href: '/manifest.webmanifest' },
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
       {
         rel: 'stylesheet',
-        href: appCss,
+        href: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@500;600;700&family=Sriracha&display=swap',
       },
+      { rel: 'stylesheet', href: appCss },
     ],
   }),
   shellComponent: RootDocument,
+  component: RootLayout,
 })
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="th">
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
-        <Header />
+      <body>
         {children}
-        <Footer />
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function RootLayout() {
+  const { aiEnabled } = Route.useLoaderData()
+  return (
+    <GardenProvider aiEnabled={aiEnabled}>
+      <Decor />
+      <div className="app">
+        <AppHeader />
+        <Outlet />
+      </div>
+      <BottomNav />
+    </GardenProvider>
   )
 }
