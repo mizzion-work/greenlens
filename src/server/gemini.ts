@@ -97,6 +97,20 @@ export function wasBlocked(resp: GeminiResponse): boolean {
   return !!reason && BLOCKED_REASONS.has(reason)
 }
 
+export type GeminiFailure = 'quota' | 'busy' | 'not-configured' | 'failed'
+
+/**
+ * Map a Gemini HTTP error to what the user should be told.
+ * 402 = prepaid credits depleted; a 429 that mentions quota = plan quota used up.
+ */
+export function classifyGeminiError(status: number, body: string): GeminiFailure {
+  if (status === 402) return 'quota'
+  if (status === 429) return /quota/i.test(body) ? 'quota' : 'busy'
+  if (status === 503) return 'busy'
+  if (status === 401 || status === 403 || body.includes('API_KEY_INVALID')) return 'not-configured'
+  return 'failed'
+}
+
 /** Strip a `data:image/...;base64,` prefix if present. */
 export function splitDataUrl(dataUrl: string): { mimeType: string; data: string } | null {
   const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl)

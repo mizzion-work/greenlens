@@ -12,6 +12,7 @@ import {
   type SpaceAnalysis,
 } from '../lib/prompts'
 import {
+  classifyGeminiError,
   extractImage,
   extractText,
   GeminiError,
@@ -32,6 +33,7 @@ export type FailureCode =
   | 'blocked'
   | 'no-image'
   | 'busy'
+  | 'quota'
   | 'failed'
 
 export type Failure = { ok: false; code: FailureCode }
@@ -60,11 +62,7 @@ async function overLimit(limiter: RateLimit | undefined): Promise<boolean> {
 function failureFrom(err: unknown, where: string): Failure {
   if (err instanceof GeminiError) {
     console.error(`${where}: Gemini ${err.status}`, err.body)
-    if (err.status === 429 || err.status === 503) return { ok: false, code: 'busy' }
-    if (err.status === 401 || err.status === 403 || err.body.includes('API_KEY_INVALID')) {
-      return { ok: false, code: 'not-configured' }
-    }
-    return { ok: false, code: 'failed' }
+    return { ok: false, code: classifyGeminiError(err.status, err.body) }
   }
   console.error(`${where}:`, err)
   return { ok: false, code: 'failed' }

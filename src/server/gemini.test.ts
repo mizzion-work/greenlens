@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractImage, extractText, splitDataUrl, wasBlocked } from './gemini'
+import { classifyGeminiError, extractImage, extractText, splitDataUrl, wasBlocked } from './gemini'
 import { buildGardenPrompt, SpaceAnalysisSchema } from '../lib/prompts'
 
 describe('gemini response helpers', () => {
@@ -51,6 +51,37 @@ describe('gemini response helpers', () => {
     })
     expect(splitDataUrl('data:image/svg+xml;base64,QUJD')).toBeNull()
     expect(splitDataUrl('https://example.com/a.jpg')).toBeNull()
+  })
+})
+
+describe('classifyGeminiError', () => {
+  it('treats depleted prepaid credits as quota', () => {
+    const body = JSON.stringify({
+      error: {
+        code: 402,
+        message: 'Your prepayment credits are depleted. Please go to AI Studio...',
+        status: 'RESOURCE_EXHAUSTED',
+      },
+    })
+    expect(classifyGeminiError(402, body)).toBe('quota')
+  })
+
+  it('treats an exceeded quota 429 as quota, other 429/503 as busy', () => {
+    expect(classifyGeminiError(429, '{"error":{"message":"You exceeded your current quota"}}')).toBe('quota')
+    expect(classifyGeminiError(429, '{"error":{"message":"Too many requests"}}')).toBe('busy')
+    expect(classifyGeminiError(503, '{"error":{"message":"The model is overloaded"}}')).toBe('busy')
+  })
+
+  it('treats bad or missing keys as not configured', () => {
+    expect(classifyGeminiError(400, '{"error":{"details":[{"reason":"API_KEY_INVALID"}]}}')).toBe(
+      'not-configured',
+    )
+    expect(classifyGeminiError(403, '{}')).toBe('not-configured')
+  })
+
+  it('falls back to failed', () => {
+    expect(classifyGeminiError(404, '{"error":{"message":"model not found"}}')).toBe('failed')
+    expect(classifyGeminiError(500, '')).toBe('failed')
   })
 })
 
