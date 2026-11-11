@@ -57,29 +57,35 @@ function ResultPage() {
   }
 
   return (
-    <main>
-      <header className="result-head">
-        <h1 className="page-title">
-          พื้นที่สีเขียวของคุณ
-          <br />
-          ในแบบที่เป็นไปได้!
-        </h1>
-        <p>
-          {result.source === 'ai' ? 'AI จำลองพื้นที่สีเขียวที่เหมาะกับคุณ' : 'ภาพจำลองพื้นที่สีเขียวที่เหมาะกับคุณ'}
-          <Leaf size={15} />
-        </p>
-      </header>
+    <main
+      className="result-grid"
+      // Lets the desktop grid size the image column to the photo's shape.
+      style={{ ['--media-ratio' as string]: (photo.width / photo.height).toFixed(4) }}
+    >
+      <div className="result-intro">
+        <header className="result-head">
+          <h1 className="page-title">
+            พื้นที่สีเขียวของคุณ
+            <br />
+            ในแบบที่เป็นไปได้!
+          </h1>
+          <p>
+            {result.source === 'ai' ? 'AI จำลองพื้นที่สีเขียวที่เหมาะกับคุณ' : 'ภาพจำลองพื้นที่สีเขียวที่เหมาะกับคุณ'}
+            <Leaf size={15} />
+          </p>
+        </header>
 
-      {result.source === 'preview' && (
-        <div className="notice warn" role="status">
-          <Info size={17} />
-          <span>
-            <b>ภาพจำลองแบบง่าย</b> · {FAILURE_MESSAGE[result.fallbackReason ?? 'not-configured']}
-          </span>
-        </div>
-      )}
+        {result.source === 'preview' && (
+          <div className="notice warn" role="status">
+            <Info size={17} />
+            <span>
+              <b>ภาพจำลองแบบง่าย</b> · {FAILURE_MESSAGE[result.fallbackReason ?? 'not-configured']}
+            </span>
+          </div>
+        )}
 
-      <div style={{ position: 'relative' }}>
+      </div>
+      <div className="result-media">
         <BeforeAfter before={photo.dataUrl} after={result.image} width={photo.width} height={photo.height} />
         {g.generating && (
           <div className="scan" role="status" aria-live="polite" style={{ borderRadius: 24 }}>
@@ -90,63 +96,65 @@ function ResultPage() {
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div className="plant-strip" aria-label="ต้นไม้ในภาพ" style={{ flex: 1, minWidth: 0 }}>
-          {plan.items.map((it) => (
-            <span key={it.plantId}>
-              <Sprout size={13} />
-              {getPlant(it.plantId).nameTh} × {it.count}
-            </span>
-          ))}
+      <div className="result-side">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="plant-strip" aria-label="ต้นไม้ในภาพ" style={{ flex: 1, minWidth: 0 }}>
+            {plan.items.map((it) => (
+              <span key={it.plantId}>
+                <Sprout size={13} />
+                {getPlant(it.plantId).nameTh} × {it.count}
+              </span>
+            ))}
+          </div>
+          <span className="hand" style={{ flex: 'none', marginTop: 10, transform: 'rotate(-5deg)' }} aria-hidden="true">
+            ลองเลื่อนดูสิ!
+          </span>
         </div>
-        <span className="hand" style={{ flex: 'none', marginTop: 10, transform: 'rotate(-5deg)' }} aria-hidden="true">
-          ลองเลื่อนดูสิ!
-        </span>
-      </div>
 
-      <button type="button" className="soft-action" onClick={regenerate} disabled={g.generating}>
-        <span className="sa-icon">
-          <RefreshCw size={19} className={g.generating ? 'animate-spin' : undefined} />
-        </span>
-        <span>
-          <b>Regenerate</b>
-          <small>ลองจัดสวนแบบอื่น</small>
-        </span>
-        <Sparkles size={20} className="sa-end" />
-      </button>
-      {regenError && (
-        <div className="notice warn" role="alert">
-          <CircleAlert size={17} />
-          สร้างภาพใหม่ไม่สำเร็จ ลองอีกครั้ง
-        </div>
-      )}
-
-      <Link to="/plan" className="cta">
-        <span className="cta-icon">
-          <Leaf size={22} />
-        </span>
-        <span className="cta-text">
-          <b>ดูรายการต้นไม้</b>
-          <small>View Action Plan</small>
-        </span>
-        <ChevronRight size={22} />
-      </Link>
-
-      <div className="mini-actions">
-        <a href={result.image} download={fileName}>
-          <Download size={15} /> บันทึกภาพ
-        </a>
-        {canShare && (
-          <button type="button" onClick={share}>
-            <Share2 size={15} /> แชร์
-          </button>
+        <button type="button" className="soft-action" onClick={regenerate} disabled={g.generating}>
+          <span className="sa-icon">
+            <RefreshCw size={19} className={g.generating ? 'animate-spin' : undefined} />
+          </span>
+          <span>
+            <b>Regenerate</b>
+            <small>ลองจัดสวนแบบอื่น</small>
+          </span>
+          <Sparkles size={20} className="sa-end" />
+        </button>
+        {regenError && (
+          <div className="notice warn" role="alert">
+            <CircleAlert size={17} />
+            สร้างภาพใหม่ไม่สำเร็จ ลองอีกครั้ง
+          </div>
         )}
-      </div>
 
-      <p className="fine" style={{ textAlign: 'center', marginTop: 14 }}>
-        * ภาพนี้{result.source === 'ai' ? 'สร้างโดย AI' : 'เป็นภาพจำลอง'}เพื่อเป็นแรงบันดาลใจ
-        ขนาดและตำแหน่งจริงของต้นไม้อาจต่างไปตามพื้นที่ของคุณ
-      </p>
+        <Link to="/plan" className="cta">
+          <span className="cta-icon">
+            <Leaf size={22} />
+          </span>
+          <span className="cta-text">
+            <b>ดูรายการต้นไม้</b>
+            <small>View Action Plan</small>
+          </span>
+          <ChevronRight size={22} />
+        </Link>
+
+        <div className="mini-actions">
+          <a href={result.image} download={fileName}>
+            <Download size={15} /> บันทึกภาพ
+          </a>
+          {canShare && (
+            <button type="button" onClick={share}>
+              <Share2 size={15} /> แชร์
+            </button>
+          )}
+        </div>
+
+        <p className="fine" style={{ textAlign: 'center', marginTop: 14 }}>
+          * ภาพนี้{result.source === 'ai' ? 'สร้างโดย AI' : 'เป็นภาพจำลอง'}เพื่อเป็นแรงบันดาลใจ
+          ขนาดและตำแหน่งจริงของต้นไม้อาจต่างไปตามพื้นที่ของคุณ
+        </p>
+      </div>
     </main>
   )
 }

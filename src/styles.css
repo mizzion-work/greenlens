@@ -1886,3 +1886,311 @@ details[open] > summary .guide-chevron {
 .prose-lite li::marker {
   color: var(--green-500);
 }
+
+/* Small phones: the hero note would collide with the headline, so tuck it under the art. */
+@media (max-width: 459px) {
+  .hero h1 {
+    font-size: clamp(26px, 7.6vw, 31px);
+  }
+  .hero p {
+    max-width: 205px;
+  }
+  .hero .hand {
+    top: auto;
+    right: 0;
+    bottom: -14px;
+    transform: rotate(-4deg);
+  }
+  .hero .hero-arrow {
+    display: none;
+  }
+  .hero-art {
+    width: 150px;
+    height: 142px;
+  }
+}
+
+/* ================================================================== responsive
+   Mobile is the base. Tablet widens the column and turns long lists into grids;
+   desktop splits each screen into two working columns, moves navigation into
+   the header and turns the chat into a floating panel. */
+
+.top-nav {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .app {
+    max-width: 760px;
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  .hero {
+    min-height: 180px;
+  }
+  .hero h1 {
+    font-size: 38px;
+  }
+  .hero-art {
+    width: 210px;
+    height: 200px;
+    right: -6px;
+  }
+  .hero .hand {
+    right: 140px;
+  }
+  .upload.has-photo img {
+    max-height: 540px;
+  }
+  .page-title {
+    font-size: 28px;
+  }
+
+  .carousel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+  }
+  .plant-card {
+    width: auto;
+  }
+  .carousel-dots {
+    display: none;
+  }
+  .saved-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chat-fab {
+    right: max(28px, calc(50% - 380px + 12px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .app {
+    max-width: 1180px;
+    padding: 18px 40px 72px;
+  }
+  .bottom-nav {
+    display: none;
+  }
+  .decor {
+    max-width: none;
+  }
+  .decor svg {
+    transform-origin: center;
+    scale: 1.35;
+  }
+
+  /* header */
+  .app-header {
+    padding: 8px 0 22px;
+  }
+  .top-nav {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .top-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    color: var(--ink-2);
+    font-size: 14.5px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .top-nav a:hover {
+    background: var(--mint-50);
+  }
+  .top-nav a.active {
+    background: var(--mint-100);
+    color: var(--green-700);
+    font-weight: 600;
+  }
+  .app-header .icon-btn {
+    margin-left: 8px;
+  }
+
+  .page-title {
+    font-size: 32px;
+  }
+  .section-head h2 {
+    font-size: 21px;
+  }
+
+  /* home: photo on the left, settings panel on the right */
+  .capture-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 44px;
+    align-items: start;
+  }
+  .hero {
+    min-height: 220px;
+    padding-top: 18px;
+  }
+  .hero h1 {
+    font-size: 48px;
+  }
+  .hero p {
+    font-size: 15.5px;
+    max-width: 340px;
+  }
+  .hero-art {
+    width: 270px;
+    height: 250px;
+    right: -10px;
+    top: -18px;
+  }
+  .hero .hand {
+    right: 190px;
+    top: 0;
+    font-size: 14px;
+  }
+  .upload {
+    padding: 48px 24px 36px;
+  }
+  .upload.has-photo img {
+    max-height: calc(100dvh - 330px);
+    min-height: 360px;
+  }
+  .capture-side {
+    position: sticky;
+    top: 20px;
+    padding: 6px 26px 24px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(6px);
+  }
+  .capture-side .section-head:first-child {
+    margin-top: 20px;
+  }
+
+  /* before / after: big image left, title and actions right */
+  .result-grid {
+    display: grid;
+    grid-template-columns:
+      min(calc((100dvh - 170px) * var(--media-ratio, 0.8)), calc(100% - 444px))
+      minmax(340px, 400px);
+    justify-content: center;
+    grid-template-areas:
+      'media intro'
+      'media side';
+    grid-template-rows: auto 1fr;
+    column-gap: 44px;
+    align-items: start;
+  }
+  .result-intro {
+    grid-area: intro;
+  }
+  .result-media {
+    grid-area: media;
+    position: sticky;
+    top: 20px;
+  }
+  .result-side {
+    grid-area: side;
+  }
+  .result-head {
+    text-align: left;
+    margin-top: 12px;
+  }
+  .result-side .mini-actions {
+    justify-content: flex-start;
+  }
+  .result-side .fine {
+    text-align: left !important;
+  }
+
+  /* results */
+  .plan-top {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+  .plan-top .summary-row {
+    margin-top: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+    padding: 18px;
+    border-radius: 20px;
+  }
+  .stat .stat-value {
+    font-size: 26px;
+  }
+  .carousel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .plan-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    grid-template-areas:
+      'shop reuse'
+      'shop air';
+    grid-template-rows: auto 1fr;
+    column-gap: 32px;
+    align-items: start;
+  }
+  .plan-reuse {
+    grid-area: reuse;
+    margin-top: 12px;
+  }
+  .plan-shop {
+    grid-area: shop;
+  }
+  .plan-air {
+    grid-area: air;
+  }
+  .plan-shop .map-card {
+    aspect-ratio: 2.7 / 1;
+  }
+
+  .saved-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tips-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  .prose-lite {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* chat: floating panel beside the page */
+  .chat-fab {
+    right: 28px;
+    bottom: 28px;
+  }
+  .chat-backdrop {
+    display: none;
+  }
+  .chat-sheet {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    margin: 0;
+    width: 410px;
+    height: min(700px, calc(100dvh - 48px));
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 60px rgba(16, 38, 24, 0.24);
+  }
+}
+
+@media (min-width: 1440px) {
+  .app {
+    max-width: 1280px;
+  }
+}

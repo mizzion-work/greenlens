@@ -1,14 +1,16 @@
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { ClipboardList, House, Images, Info, Lightbulb, Menu, RotateCcw, Sprout, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useGarden } from '../state/garden'
 import { AppIcon } from './art'
+import { NAV_TABS } from './BottomNav'
 
 export function AppHeader() {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const g = useGarden()
   const navigate = useNavigate()
+  const pathname = useRouterState({ select: (st) => st.location.pathname })
 
   useEffect(() => {
     if (!open) return
@@ -35,6 +37,17 @@ export function AppHeader() {
           <small>เปลี่ยนมุมร้าง ให้เป็นปอดของเมือง</small>
         </span>
       </Link>
+      <nav className="top-nav" aria-label="เมนูหลัก">
+        {NAV_TABS.map(({ to, Icon, label, match }) => {
+          const active = match(pathname)
+          return (
+            <Link key={to} to={to} className={active ? 'active' : undefined} aria-current={active ? 'page' : undefined}>
+              <Icon size={18} strokeWidth={1.9} />
+              {label}
+            </Link>
+          )
+        })}
+      </nav>
       <button
         type="button"
         className="icon-btn"

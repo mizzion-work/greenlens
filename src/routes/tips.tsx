@@ -115,59 +115,65 @@ function TipsPage() {
         </span>
       </div>
 
-      {mine.length > 0 && (
-        <>
+      <div className="tips-grid">
+        <div className="tips-col">
+          {mine.length > 0 && (
+            <>
+              <div className="section-head">
+                <h2>
+                  <Sprout size={19} /> ต้นไม้ในสวนของคุณ
+                </h2>
+              </div>
+              <div className="guide-list">
+                {mine.map((p) => (
+                  <PlantGuide key={p.id} plant={p} open={!focus || focus === p.id} />
+                ))}
+              </div>
+            </>
+          )}
+
           <div className="section-head">
             <h2>
-              <Sprout size={19} /> ต้นไม้ในสวนของคุณ
+              <Eye size={19} /> เรื่องที่ควรรู้
             </h2>
           </div>
           <div className="guide-list">
-            {mine.map((p) => (
-              <PlantGuide key={p.id} plant={p} open={!focus || focus === p.id} />
+            {GENERAL_TIPS.map((t) => {
+              const Icon = TIP_ICON[t.id] ?? Sprout
+              return (
+                <details key={t.id} className="tip">
+                  <summary>
+                    <i>
+                      <Icon size={17} />
+                    </i>
+                    <b>{t.title}</b>
+                    <ChevronDown size={18} className="guide-chevron" />
+                  </summary>
+                  <ul>
+                    {t.body.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </details>
+              )
+            })}
+          </div>
+
+        </div>
+        <div className="tips-col">
+          <div className="section-head">
+            <h2>
+              <Sprout size={19} /> คู่มือต้นไม้ทั้ง {PLANTS.length} ชนิด
+            </h2>
+          </div>
+          <div className="guide-list">
+            {PLANTS.filter((p) => !mineIds.has(p.id)).map((p) => (
+              <PlantGuide key={p.id} plant={p} open={focus === p.id} />
             ))}
           </div>
-        </>
-      )}
 
-      <div className="section-head">
-        <h2>
-          <Eye size={19} /> เรื่องที่ควรรู้
-        </h2>
+        </div>
       </div>
-      <div className="guide-list">
-        {GENERAL_TIPS.map((t) => {
-          const Icon = TIP_ICON[t.id] ?? Sprout
-          return (
-            <details key={t.id} className="tip">
-              <summary>
-                <i>
-                  <Icon size={17} />
-                </i>
-                <b>{t.title}</b>
-                <ChevronDown size={18} className="guide-chevron" />
-              </summary>
-              <ul>
-                {t.body.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </details>
-          )
-        })}
-      </div>
-
-      <div className="section-head">
-        <h2>
-          <Sprout size={19} /> คู่มือต้นไม้ทั้ง {PLANTS.length} ชนิด
-        </h2>
-      </div>
-      <div className="guide-list">
-        {PLANTS.filter((p) => !mineIds.has(p.id)).map((p) => (
-          <PlantGuide key={p.id} plant={p} open={focus === p.id} />
-        ))}
-      </div>
-
       <p className="fine" style={{ textAlign: 'center', marginTop: 14 }}>
         * คำแนะนำทั่วไปสำหรับสภาพอากาศในไทย ต้นไม้แต่ละต้นอาจต้องการต่างกันเล็กน้อย สังเกตใบและดินเป็นหลัก
       </p>

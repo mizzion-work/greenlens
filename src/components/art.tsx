@@ -360,9 +360,10 @@ export function DustArt({ className }: { className?: string }) {
 
 /* ------------------------------------------------------------------ handwritten note */
 
-export function HandArrow({ style, flip }: { style?: CSSProperties; flip?: boolean }) {
+export function HandArrow({ style, flip, className }: { style?: CSSProperties; flip?: boolean; className?: string }) {
   return (
     <svg
+      className={className}
       width="30"
       height="34"
       viewBox="0 0 30 34"

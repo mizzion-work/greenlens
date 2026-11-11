@@ -125,56 +125,58 @@ function PlanPage() {
         </span>
       </div>
 
-      <div className="stats">
-        <div className="stat">
-          <GaugeArt className="stat-art" value={impact.tempDrop[1] / 2} />
-          <div className="stat-label">
-            <i>
-              <Thermometer size={15} />
-            </i>
-            ลดอุณหภูมิ
-          </div>
-          <b className="stat-value">
-            -{impact.tempDrop[0]}°C
-            <br />
-            ถึง -{impact.tempDrop[1]}°C
-          </b>
-          <div className="stat-note">คาดการณ์ความร้อนที่ลดลงบริเวณที่ปลูก</div>
-        </div>
-        <div className="stat">
-          <DustArt className="stat-art" />
-          <div className="stat-label">
-            <i>
-              <Wind size={15} />
-            </i>
-            ดักฝุ่น PM2.5
-          </div>
-          <b className="stat-value">
-            ~{impact.pmReduction[0]}–{impact.pmReduction[1]}%
-          </b>
-          <div className="stat-note">ฝุ่นที่ใบไม้ช่วยดักไว้เฉพาะจุด</div>
-        </div>
-      </div>
-
-      <div className="summary-row">
-        <div>
-          <Leaf size={18} />
-          <span>
-            <b>{impact.leafAreaM2} ตร.ม.</b>
-            พื้นที่ใบรวม {impact.potCount} กระถาง
-          </span>
-        </div>
-        <div>
-          <Coins size={18} />
-          <span>
-            <b>
-              {formatBaht(impact.budgetTHB[0])}–{formatBaht(impact.budgetTHB[1])}
+      <div className="plan-top">
+        <div className="stats">
+          <div className="stat">
+            <GaugeArt className="stat-art" value={impact.tempDrop[1] / 2} />
+            <div className="stat-label">
+              <i>
+                <Thermometer size={15} />
+              </i>
+              ลดอุณหภูมิ
+            </div>
+            <b className="stat-value">
+              -{impact.tempDrop[0]}°C
+              <br />
+              ถึง -{impact.tempDrop[1]}°C
             </b>
-            งบค่าต้นไม้โดยประมาณ
-          </span>
+            <div className="stat-note">คาดการณ์ความร้อนที่ลดลงบริเวณที่ปลูก</div>
+          </div>
+          <div className="stat">
+            <DustArt className="stat-art" />
+            <div className="stat-label">
+              <i>
+                <Wind size={15} />
+              </i>
+              ดักฝุ่น PM2.5
+            </div>
+            <b className="stat-value">
+              ~{impact.pmReduction[0]}–{impact.pmReduction[1]}%
+            </b>
+            <div className="stat-note">ฝุ่นที่ใบไม้ช่วยดักไว้เฉพาะจุด</div>
+          </div>
         </div>
-      </div>
 
+        <div className="summary-row">
+          <div>
+            <Leaf size={18} />
+            <span>
+              <b>{impact.leafAreaM2} ตร.ม.</b>
+              พื้นที่ใบรวม {impact.potCount} กระถาง
+            </span>
+          </div>
+          <div>
+            <Coins size={18} />
+            <span>
+              <b>
+                {formatBaht(impact.budgetTHB[0])}–{formatBaht(impact.budgetTHB[1])}
+              </b>
+              งบค่าต้นไม้โดยประมาณ
+            </span>
+          </div>
+        </div>
+
+      </div>
       <div className="section-head">
         <h2>รายการต้นไม้แนะนำ</h2>
         <span className="hand" style={{ transform: 'rotate(-4deg)', textAlign: 'right' }}>
@@ -256,108 +258,116 @@ function PlanPage() {
         </div>
       )}
 
-      <button
-        type="button"
-        className="soft-action"
-        onClick={() =>
-          chat.openChat(
-            `ฉันมีต้น… อยู่แล้ว ใช้แทนต้นไม้ในรายการ (${rows.map((r) => r.plant.nameTh).join(', ')}) ได้ไหม`,
-          )
-        }
-      >
-        <span className="sa-icon">
-          <MessageCircleQuestion size={19} />
-        </span>
-        <span>
-          <b>มีต้นไม้อยู่แล้ว?</b>
-          <small>ถาม AI ว่าใช้แทนต้นไหนได้ ไม่ต้องซื้อใหม่ทุกต้น</small>
-        </span>
-        <ChevronRight size={20} className="sa-end" />
-      </button>
-
-      <div className="section-head">
-        <h2>ค้นหาร้านค้า &amp; สั่งซื้อ</h2>
-      </div>
-      <a className="map-card" href={nurseriesMapUrl(coords)} target="_blank" rel="noopener noreferrer">
-        <MapArt />
-        <span className="map-pin">
-          <i>
-            <Store size={15} />
-          </i>
-          ร้านต้นไม้ใกล้คุณ
-        </span>
-      </a>
-
-      <a
-        className="cta"
-        href={`https://shopee.co.th/search?keyword=${encodeURIComponent(`ต้นไม้ ${allNames}`)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="cta-icon">
-          <Sprout size={22} />
-        </span>
-        <span className="cta-text">
-          <b>ค้นหาร้านค้า &amp; สั่งซื้อออนไลน์</b>
-          <small>ค้นหาต้นไม้ทั้งหมดในรายการ</small>
-        </span>
-        <ArrowRight size={22} />
-      </a>
-
-      <div className="mini-actions">
-        <button type="button" onClick={copyList}>
-          {copied === 'ok' ? <Check size={15} /> : <ClipboardCopy size={15} />}
-          {copied === 'ok' ? 'คัดลอกรายการแล้ว' : copied === 'fail' ? 'คัดลอกไม่สำเร็จ' : 'คัดลอกรายการต้นไม้'}
-        </button>
-      </div>
-
-      <div className="section-head">
-        <h2>
-          <Wind size={19} /> อากาศรอบบ้านคุณตอนนี้
-        </h2>
-      </div>
-      <div className="card">
-        <div className="fine" style={{ fontWeight: 600, color: 'var(--ink-2)', fontSize: 13 }}>
-          {conditions ? placeLabel : 'กำลังหาตำแหน่ง…'}
-        </div>
-        {!conditions && <p className="fine">กำลังโหลดข้อมูลอากาศ…</p>}
-        {conditions && conditions.pm25 == null && <p className="fine">ยังโหลดข้อมูลค่าฝุ่นไม่ได้ในขณะนี้</p>}
-        {conditions && level && conditions.pm25 != null && (
-          <div className="aq" style={{ marginTop: 10 }}>
-            <div className={`aq-value tone-${level.tone}`}>
-              <b>{Math.round(conditions.pm25)}</b>
-              <small>µg/m³</small>
-            </div>
-            <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}>
-                PM2.5 · {level.label}
-              </div>
-              <div className="fine">{level.advice}</div>
-              <div className="fine" style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-                {conditions.tempC != null && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                    <Thermometer size={13} /> {Math.round(conditions.tempC)}°C
-                  </span>
-                )}
-                {conditions.uvIndex != null && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                    <Sun size={13} /> UV {Math.round(conditions.uvIndex)}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        {conditions && conditions.source !== 'device' && (
-          <button type="button" className="text-btn" onClick={locate} disabled={locating}>
-            <LocateFixed size={15} /> {locating ? 'กำลังหาตำแหน่ง…' : 'ใช้ตำแหน่งที่แม่นยำของฉัน'}
+      <div className="plan-bottom">
+        <div className="plan-reuse">
+          <button
+            type="button"
+            className="soft-action"
+            onClick={() =>
+              chat.openChat(
+                `ฉันมีต้น… อยู่แล้ว ใช้แทนต้นไม้ในรายการ (${rows.map((r) => r.plant.nameTh).join(', ')}) ได้ไหม`,
+              )
+            }
+          >
+            <span className="sa-icon">
+              <MessageCircleQuestion size={19} />
+            </span>
+            <span>
+              <b>มีต้นไม้อยู่แล้ว?</b>
+              <small>ถาม AI ว่าใช้แทนต้นไหนได้ ไม่ต้องซื้อใหม่ทุกต้น</small>
+            </span>
+            <ChevronRight size={20} className="sa-end" />
           </button>
-        )}
-        <p className="fine" style={{ margin: '8px 0 0' }}>
-          แบบจำลอง CAMS ผ่าน Open-Meteo · เกณฑ์สีตามกรมควบคุมมลพิษ
-        </p>
-      </div>
 
+        </div>
+        <div className="plan-shop">
+          <div className="section-head">
+            <h2>ค้นหาร้านค้า &amp; สั่งซื้อ</h2>
+          </div>
+          <a className="map-card" href={nurseriesMapUrl(coords)} target="_blank" rel="noopener noreferrer">
+            <MapArt />
+            <span className="map-pin">
+              <i>
+                <Store size={15} />
+              </i>
+              ร้านต้นไม้ใกล้คุณ
+            </span>
+          </a>
+
+          <a
+            className="cta"
+            href={`https://shopee.co.th/search?keyword=${encodeURIComponent(`ต้นไม้ ${allNames}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="cta-icon">
+              <Sprout size={22} />
+            </span>
+            <span className="cta-text">
+              <b>ค้นหาร้านค้า &amp; สั่งซื้อออนไลน์</b>
+              <small>ค้นหาต้นไม้ทั้งหมดในรายการ</small>
+            </span>
+            <ArrowRight size={22} />
+          </a>
+
+          <div className="mini-actions">
+            <button type="button" onClick={copyList}>
+              {copied === 'ok' ? <Check size={15} /> : <ClipboardCopy size={15} />}
+              {copied === 'ok' ? 'คัดลอกรายการแล้ว' : copied === 'fail' ? 'คัดลอกไม่สำเร็จ' : 'คัดลอกรายการต้นไม้'}
+            </button>
+          </div>
+
+        </div>
+        <div className="plan-air">
+          <div className="section-head">
+            <h2>
+              <Wind size={19} /> อากาศรอบบ้านคุณตอนนี้
+            </h2>
+          </div>
+          <div className="card">
+            <div className="fine" style={{ fontWeight: 600, color: 'var(--ink-2)', fontSize: 13 }}>
+              {conditions ? placeLabel : 'กำลังหาตำแหน่ง…'}
+            </div>
+            {!conditions && <p className="fine">กำลังโหลดข้อมูลอากาศ…</p>}
+            {conditions && conditions.pm25 == null && <p className="fine">ยังโหลดข้อมูลค่าฝุ่นไม่ได้ในขณะนี้</p>}
+            {conditions && level && conditions.pm25 != null && (
+              <div className="aq" style={{ marginTop: 10 }}>
+                <div className={`aq-value tone-${level.tone}`}>
+                  <b>{Math.round(conditions.pm25)}</b>
+                  <small>µg/m³</small>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}>
+                    PM2.5 · {level.label}
+                  </div>
+                  <div className="fine">{level.advice}</div>
+                  <div className="fine" style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+                    {conditions.tempC != null && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <Thermometer size={13} /> {Math.round(conditions.tempC)}°C
+                      </span>
+                    )}
+                    {conditions.uvIndex != null && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <Sun size={13} /> UV {Math.round(conditions.uvIndex)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {conditions && conditions.source !== 'device' && (
+              <button type="button" className="text-btn" onClick={locate} disabled={locating}>
+                <LocateFixed size={15} /> {locating ? 'กำลังหาตำแหน่ง…' : 'ใช้ตำแหน่งที่แม่นยำของฉัน'}
+              </button>
+            )}
+            <p className="fine" style={{ margin: '8px 0 0' }}>
+              แบบจำลอง CAMS ผ่าน Open-Meteo · เกณฑ์สีตามกรมควบคุมมลพิษ
+            </p>
+          </div>
+
+        </div>
+      </div>
       <p className="fine" style={{ textAlign: 'center', marginTop: 14 }}>
         * ตัวเลขเป็นค่าประมาณจากพื้นที่ใบและชนิดพรรณไม้ ไม่ใช่ค่าตรวจวัดจริง ·{' '}
         <Link to="/about" hash="method">

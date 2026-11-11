@@ -109,218 +109,222 @@ function CapturePage() {
     sunLight === g.input.light ? 'คำนวณจากทิศ' : ai?.light === g.input.light && !g.input.facing ? 'AI แนะนำ' : null
 
   return (
-    <main>
-      <section className="hero">
-        <span className="hand">
-          ถ่ายพื้นที่ว่าง
-          <br />
-          เปลี่ยนเป็นสวน
-        </span>
-        <HandArrow style={{ position: 'absolute', right: 70, top: 30, zIndex: 3 }} />
-        <HeroArt className="hero-art" />
-        <h1>
-          เปลี่ยนมุมร้าง
-          <br />
-          ให้เป็นปอดของเมือง
-        </h1>
-        <p>ถ่ายรูปพื้นที่ว่าง แล้วให้ AI จัดสวนฟอกอากาศที่เหมาะกับบ้านคุณให้ดูทันที</p>
-      </section>
+    <main className="capture-grid">
+      <div className="capture-main">
+        <section className="hero">
+          <span className="hand">
+            ถ่ายพื้นที่ว่าง
+            <br />
+            เปลี่ยนเป็นสวน
+          </span>
+          <HandArrow className="hero-arrow" style={{ position: 'absolute', right: 70, top: 30, zIndex: 3 }} />
+          <HeroArt className="hero-art" />
+          <h1>
+            เปลี่ยนมุมร้าง
+            <br />
+            ให้เป็นปอดของเมือง
+          </h1>
+          <p>ถ่ายรูปพื้นที่ว่าง แล้วให้ AI จัดสวนฟอกอากาศที่เหมาะกับบ้านคุณให้ดูทันที</p>
+        </section>
 
-      <div
-        className={`upload${g.photo ? ' has-photo' : ''}${dragging ? ' dragging' : ''}`}
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragging(true)
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        {g.photo ? (
-          <>
-            <img src={g.photo.dataUrl} alt="ภาพพื้นที่ของคุณ" />
-            {!g.generating && (
-              <button type="button" className="photo-chip" onClick={() => libraryRef.current?.click()}>
-                <ImagePlus size={15} /> เปลี่ยนรูป
+        <div
+          className={`upload${g.photo ? ' has-photo' : ''}${dragging ? ' dragging' : ''}`}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragging(true)
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+        >
+          {g.photo ? (
+            <>
+              <img src={g.photo.dataUrl} alt="ภาพพื้นที่ของคุณ" />
+              {!g.generating && (
+                <button type="button" className="photo-chip" onClick={() => libraryRef.current?.click()}>
+                  <ImagePlus size={15} /> เปลี่ยนรูป
+                </button>
+              )}
+              {!g.generating && analysis.status === 'running' && (
+                <div className="analysis-chip" role="status">
+                  <LoaderCircle size={17} className="animate-spin" />
+                  AI กำลังดูพื้นที่ของคุณ เพื่อตั้งค่าด้านล่างให้อัตโนมัติ…
+                </div>
+              )}
+              {!g.generating && ai && (
+                <div className="analysis-chip" role="status">
+                  <ScanSearch size={17} />
+                  <span>
+                    <b>AI มองเห็น:</b> {ai.summaryTh}
+                  </span>
+                </div>
+              )}
+              {!g.generating && analysis.status === 'done' && !analysis.analysis.isOutdoorSpace && (
+                <div className="analysis-chip warn" role="status">
+                  <TriangleAlert size={17} />
+                  <span>ภาพนี้อาจไม่ใช่พื้นที่สำหรับวางต้นไม้ ลองถ่ายระเบียง ลานบ้าน หรือดาดฟ้าให้เห็นพื้นชัด ๆ</span>
+                </div>
+              )}
+              {g.generating && (
+                <div className="scan" role="status" aria-live="polite">
+                  <span className="scan-label">
+                    <Sparkles size={15} /> {SCAN_STEPS[step]}
+                  </span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="lens">
+                {loadingPhoto ? <LoaderCircle size={30} className="animate-spin" /> : <Camera size={32} strokeWidth={1.8} />}
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => cameraRef.current?.click()}
+                disabled={loadingPhoto}
+              >
+                ถ่ายรูปพื้นที่ว่างของคุณ
               </button>
-            )}
-            {!g.generating && analysis.status === 'running' && (
-              <div className="analysis-chip" role="status">
-                <LoaderCircle size={17} className="animate-spin" />
-                AI กำลังดูพื้นที่ของคุณ เพื่อตั้งค่าด้านล่างให้อัตโนมัติ…
+              <div>
+                <button type="button" className="alt-action" onClick={() => libraryRef.current?.click()}>
+                  <Upload size={15} /> หรือ อัปโหลดรูปจากแกลเลอรี
+                </button>
               </div>
-            )}
-            {!g.generating && ai && (
-              <div className="analysis-chip" role="status">
-                <ScanSearch size={17} />
-                <span>
-                  <b>AI มองเห็น:</b> {ai.summaryTh}
-                </span>
-              </div>
-            )}
-            {!g.generating && analysis.status === 'done' && !analysis.analysis.isOutdoorSpace && (
-              <div className="analysis-chip warn" role="status">
-                <TriangleAlert size={17} />
-                <span>ภาพนี้อาจไม่ใช่พื้นที่สำหรับวางต้นไม้ ลองถ่ายระเบียง ลานบ้าน หรือดาดฟ้าให้เห็นพื้นชัด ๆ</span>
-              </div>
-            )}
-            {g.generating && (
-              <div className="scan" role="status" aria-live="polite">
-                <span className="scan-label">
-                  <Sparkles size={15} /> {SCAN_STEPS[step]}
-                </span>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="lens">
-              {loadingPhoto ? <LoaderCircle size={30} className="animate-spin" /> : <Camera size={32} strokeWidth={1.8} />}
-            </div>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => cameraRef.current?.click()}
-              disabled={loadingPhoto}
-            >
-              ถ่ายรูปพื้นที่ว่างของคุณ
+            </>
+          )}
+        </div>
+
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => {
+            onFile(e.target.files?.[0])
+            e.target.value = ''
+          }}
+        />
+        <input
+          ref={libraryRef}
+          type="file"
+          accept="image/*,.heic,.heif"
+          hidden
+          onChange={(e) => {
+            onFile(e.target.files?.[0])
+            e.target.value = ''
+          }}
+        />
+
+        {!g.photo && (
+          <div className="link-row" style={{ marginTop: 10 }}>
+            <button type="button" onClick={() => void loadPhoto(sampleImage)}>
+              ไม่มีรูปตอนนี้? ลองใช้ภาพตัวอย่างระเบียงคอนกรีต
             </button>
-            <div>
-              <button type="button" className="alt-action" onClick={() => libraryRef.current?.click()}>
-                <Upload size={15} /> หรือ อัปโหลดรูปจากแกลเลอรี
-              </button>
-            </div>
-          </>
+          </div>
         )}
+
+        {photoError && (
+          <div className="notice warn" role="alert">
+            <CircleAlert size={17} />
+            {photoError}
+          </div>
+        )}
+
       </div>
+      <div className="capture-side">
+        <div className="section-head">
+          <h2>
+            <Leaf size={20} /> ตั้งค่าข้อมูลพื้นที่
+          </h2>
+          <span className="hand" style={{ transform: 'rotate(-5deg)', textAlign: 'right', maxWidth: 150 }}>
+            ข้อมูลยิ่งละเอียด
+            <br />
+            AI ยิ่งแนะนำได้แม่นยำ!
+          </span>
+        </div>
 
-      <input
-        ref={cameraRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        hidden
-        onChange={(e) => {
-          onFile(e.target.files?.[0])
-          e.target.value = ''
-        }}
-      />
-      <input
-        ref={libraryRef}
-        type="file"
-        accept="image/*,.heic,.heif"
-        hidden
-        onChange={(e) => {
-          onFile(e.target.files?.[0])
-          e.target.value = ''
-        }}
-      />
+        <SelectField<SpaceType>
+          label="ประเภทพื้นที่"
+          Icon={Building2}
+          value={g.input.spaceType}
+          options={SPACE_OPTIONS}
+          tag={ai?.spaceType === g.input.spaceType ? 'AI แนะนำ' : null}
+          onChange={(spaceType) => g.setInput({ spaceType })}
+        />
+        <FacingField />
+        <SelectField<Light>
+          label="ปริมาณแสงแดด"
+          Icon={Sun}
+          value={g.input.light}
+          options={LIGHT_OPTIONS}
+          tag={lightTag}
+          onChange={(light) => g.setInput({ light })}
+        />
+        <SelectField<SpaceSize>
+          label="ขนาดพื้นที่โดยประมาณ"
+          Icon={Ruler}
+          value={g.input.size}
+          options={SIZE_OPTIONS}
+          tag={ai?.size === g.input.size ? 'AI แนะนำ' : null}
+          onChange={(size) => g.setInput({ size })}
+        />
 
-      {!g.photo && (
-        <div className="link-row" style={{ marginTop: 10 }}>
-          <button type="button" onClick={() => void loadPhoto(sampleImage)}>
-            ไม่มีรูปตอนนี้? ลองใช้ภาพตัวอย่างระเบียงคอนกรีต
+        <div className="pill-toggles">
+          <button
+            type="button"
+            className="pill-toggle"
+            aria-pressed={g.input.hasPets}
+            onClick={() => g.setInput({ hasPets: !g.input.hasPets })}
+          >
+            <PawPrint size={15} /> มีน้องหมาน้องแมว
+          </button>
+          <button
+            type="button"
+            className="pill-toggle"
+            aria-pressed={g.input.beginner}
+            onClick={() => g.setInput({ beginner: !g.input.beginner })}
+          >
+            <Sprout size={15} /> มือใหม่หัดปลูก
           </button>
         </div>
-      )}
+        {g.input.hasPets && <p className="fine" style={{ margin: '8px 2px 0' }}>เลือกเฉพาะต้นไม้ที่ไม่เป็นพิษต่อสัตว์เลี้ยง</p>}
 
-      {photoError && (
-        <div className="notice warn" role="alert">
-          <CircleAlert size={17} />
-          {photoError}
-        </div>
-      )}
-
-      <div className="section-head">
-        <h2>
-          <Leaf size={20} /> ตั้งค่าข้อมูลพื้นที่
-        </h2>
-        <span className="hand" style={{ transform: 'rotate(-5deg)', textAlign: 'right', maxWidth: 150 }}>
-          ข้อมูลยิ่งละเอียด
-          <br />
-          AI ยิ่งแนะนำได้แม่นยำ!
-        </span>
-      </div>
-
-      <SelectField<SpaceType>
-        label="ประเภทพื้นที่"
-        Icon={Building2}
-        value={g.input.spaceType}
-        options={SPACE_OPTIONS}
-        tag={ai?.spaceType === g.input.spaceType ? 'AI แนะนำ' : null}
-        onChange={(spaceType) => g.setInput({ spaceType })}
-      />
-      <FacingField />
-      <SelectField<Light>
-        label="ปริมาณแสงแดด"
-        Icon={Sun}
-        value={g.input.light}
-        options={LIGHT_OPTIONS}
-        tag={lightTag}
-        onChange={(light) => g.setInput({ light })}
-      />
-      <SelectField<SpaceSize>
-        label="ขนาดพื้นที่โดยประมาณ"
-        Icon={Ruler}
-        value={g.input.size}
-        options={SIZE_OPTIONS}
-        tag={ai?.size === g.input.size ? 'AI แนะนำ' : null}
-        onChange={(size) => g.setInput({ size })}
-      />
-
-      <div className="pill-toggles">
-        <button
-          type="button"
-          className="pill-toggle"
-          aria-pressed={g.input.hasPets}
-          onClick={() => g.setInput({ hasPets: !g.input.hasPets })}
-        >
-          <PawPrint size={15} /> มีน้องหมาน้องแมว
+        <button type="button" className="cta" onClick={onGenerate} disabled={!g.photo || g.generating || loadingPhoto}>
+          <span className="cta-icon">
+            {g.generating ? <LoaderCircle size={22} className="animate-spin" /> : <Sparkles size={22} />}
+          </span>
+          <span className="cta-text">
+            <b>{g.generating ? 'กำลังจัดสวน…' : 'Let AI Generate'}</b>
+            <small>{g.photo ? '(เริ่มจัดสวนเลย)' : 'ถ่ายหรืออัปโหลดรูปก่อนนะ'}</small>
+          </span>
+          <ArrowRight size={22} />
         </button>
-        <button
-          type="button"
-          className="pill-toggle"
-          aria-pressed={g.input.beginner}
-          onClick={() => g.setInput({ beginner: !g.input.beginner })}
-        >
-          <Sprout size={15} /> มือใหม่หัดปลูก
-        </button>
-      </div>
-      {g.input.hasPets && <p className="fine" style={{ margin: '8px 2px 0' }}>เลือกเฉพาะต้นไม้ที่ไม่เป็นพิษต่อสัตว์เลี้ยง</p>}
 
-      <button type="button" className="cta" onClick={onGenerate} disabled={!g.photo || g.generating || loadingPhoto}>
-        <span className="cta-icon">
-          {g.generating ? <LoaderCircle size={22} className="animate-spin" /> : <Sparkles size={22} />}
-        </span>
-        <span className="cta-text">
-          <b>{g.generating ? 'กำลังจัดสวน…' : 'Let AI Generate'}</b>
-          <small>{g.photo ? '(เริ่มจัดสวนเลย)' : 'ถ่ายหรืออัปโหลดรูปก่อนนะ'}</small>
-        </span>
-        <ArrowRight size={22} />
-      </button>
+        {genError && (
+          <div className="notice warn" role="alert">
+            <CircleAlert size={17} />
+            สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้ง
+          </div>
+        )}
 
-      {genError && (
-        <div className="notice warn" role="alert">
-          <CircleAlert size={17} />
-          สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้ง
+        <p className="fine" style={{ textAlign: 'center', margin: '14px 8px 0' }}>
+          {g.aiEnabled
+            ? 'รูปถูกย่อขนาดและลบข้อมูลตำแหน่ง (GPS) ก่อนส่งให้ Google Gemini ประมวลผล GreenLens ไม่เก็บรูปไว้บนเซิร์ฟเวอร์'
+            : 'โหมดภาพจำลอง: รูปของคุณถูกประมวลผลบนเครื่องนี้เท่านั้น ไม่ถูกอัปโหลด'}
+        </p>
+
+        <div className="link-row">
+          <Link to="/about">วิธีทำงาน</Link>
+          <span className="sep">|</span>
+          <Link to="/about" hash="method">
+            วิธีคำนวณ
+          </Link>
+          <span className="sep">|</span>
+          <Link to="/about" hash="privacy">
+            ความเป็นส่วนตัว
+          </Link>
         </div>
-      )}
-
-      <p className="fine" style={{ textAlign: 'center', margin: '14px 8px 0' }}>
-        {g.aiEnabled
-          ? 'รูปถูกย่อขนาดและลบข้อมูลตำแหน่ง (GPS) ก่อนส่งให้ Google Gemini ประมวลผล GreenLens ไม่เก็บรูปไว้บนเซิร์ฟเวอร์'
-          : 'โหมดภาพจำลอง: รูปของคุณถูกประมวลผลบนเครื่องนี้เท่านั้น ไม่ถูกอัปโหลด'}
-      </p>
-
-      <div className="link-row">
-        <Link to="/about">วิธีทำงาน</Link>
-        <span className="sep">|</span>
-        <Link to="/about" hash="method">
-          วิธีคำนวณ
-        </Link>
-        <span className="sep">|</span>
-        <Link to="/about" hash="privacy">
-          ความเป็นส่วนตัว
-        </Link>
       </div>
     </main>
   )

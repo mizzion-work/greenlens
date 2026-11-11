@@ -55,11 +55,13 @@ export function ChatSheet() {
     const t = setTimeout(() => inputRef.current?.focus(), 250)
     const onKey = (e: globalThis.KeyboardEvent) => e.key === 'Escape' && chat.closeChat()
     document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
+    // On desktop the chat is a floating panel beside the page, so keep the page scrollable.
+    const lock = window.matchMedia('(max-width: 1023px)').matches
+    if (lock) document.body.style.overflow = 'hidden'
     return () => {
       clearTimeout(t)
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      if (lock) document.body.style.overflow = ''
     }
   }, [chat.open, chat.closeChat])
 

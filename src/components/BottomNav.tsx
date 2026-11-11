@@ -1,7 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { House, Info, Lightbulb, Sprout, type LucideIcon } from 'lucide-react'
 
-const TABS: { to: '/' | '/garden' | '/tips' | '/about'; Icon: LucideIcon; label: string; match: (p: string) => boolean }[] = [
+export const NAV_TABS: { to: '/' | '/garden' | '/tips' | '/about'; Icon: LucideIcon; label: string; match: (p: string) => boolean }[] = [
   { to: '/', Icon: House, label: 'หน้าแรก', match: (p) => p === '/' },
   {
     to: '/garden',
@@ -18,7 +18,7 @@ export function BottomNav() {
   return (
     <nav className="bottom-nav" aria-label="เมนูหลัก">
       <div>
-        {TABS.map(({ to, Icon, label, match }) => {
+        {NAV_TABS.map(({ to, Icon, label, match }) => {
           const active = match(pathname)
           return (
             <Link key={to} to={to} className={active ? 'active' : undefined} aria-current={active ? 'page' : undefined}>

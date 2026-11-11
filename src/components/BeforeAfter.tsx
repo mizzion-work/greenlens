@@ -32,7 +32,15 @@ export function BeforeAfter({
   }, [after])
 
   return (
-    <div className={`ba${revealing ? ' revealing' : ''}`} style={{ aspectRatio: `${width} / ${height}` }}>
+    <div
+      className={`ba${revealing ? ' revealing' : ''}`}
+      style={{
+        aspectRatio: `${width} / ${height}`,
+        // Fit the viewport height on wide screens; full width on phones.
+        width: `min(100%, calc((100dvh - 170px) * ${(width / height).toFixed(4)}))`,
+        marginInline: 'auto',
+      }}
+    >
       <img src={before} alt="พื้นที่ของคุณก่อนจัดสวน" />
       <div className="after-layer" style={{ clipPath: `inset(0 0 0 ${pos}%)` }}>
         <img src={after} alt="พื้นที่ของคุณหลังจัดสวน" />
