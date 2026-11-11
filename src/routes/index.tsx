@@ -19,7 +19,9 @@ import {
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { prepareImage, sampleImage, type PreparedImage } from '../client/image'
 import { HandArrow, HeroArt } from '../components/art'
+import { FacingField } from '../components/FacingField'
 import { SelectField } from '../components/SelectField'
+import { estimateSun } from '../lib/sun'
 import type { Light, SpaceSize, SpaceType } from '../lib/types'
 import { useGarden } from '../state/garden'
 
@@ -102,6 +104,9 @@ function CapturePage() {
 
   const analysis = g.analysis
   const ai = analysis.status === 'done' && analysis.analysis.isOutdoorSpace ? analysis.analysis : null
+  const sunLight = g.input.facing ? estimateSun(g.input.spaceType, g.input.facing, g.lat).light : null
+  const lightTag =
+    sunLight === g.input.light ? 'คำนวณจากทิศ' : ai?.light === g.input.light && !g.input.facing ? 'AI แนะนำ' : null
 
   return (
     <main>
@@ -241,15 +246,16 @@ function CapturePage() {
         Icon={Building2}
         value={g.input.spaceType}
         options={SPACE_OPTIONS}
-        aiSuggested={ai?.spaceType === g.input.spaceType}
+        tag={ai?.spaceType === g.input.spaceType ? 'AI แนะนำ' : null}
         onChange={(spaceType) => g.setInput({ spaceType })}
       />
+      <FacingField />
       <SelectField<Light>
-        label="ทิศทางและแสงแดด"
+        label="ปริมาณแสงแดด"
         Icon={Sun}
         value={g.input.light}
         options={LIGHT_OPTIONS}
-        aiSuggested={ai?.light === g.input.light}
+        tag={lightTag}
         onChange={(light) => g.setInput({ light })}
       />
       <SelectField<SpaceSize>
@@ -257,7 +263,7 @@ function CapturePage() {
         Icon={Ruler}
         value={g.input.size}
         options={SIZE_OPTIONS}
-        aiSuggested={ai?.size === g.input.size}
+        tag={ai?.size === g.input.size ? 'AI แนะนำ' : null}
         onChange={(size) => g.setInput({ size })}
       />
 

@@ -2,8 +2,10 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-r
 import type { ReactNode } from 'react'
 import { AppHeader } from '../components/AppHeader'
 import { BottomNav } from '../components/BottomNav'
+import { ChatSheet } from '../components/ChatSheet'
 import { Decor } from '../components/art'
 import { getAiStatus } from '../server/functions'
+import { ChatProvider } from '../state/chat'
 import { GardenProvider } from '../state/garden'
 
 import appCss from '../styles.css?url'
@@ -59,15 +61,18 @@ function RootDocument({ children }: { children: ReactNode }) {
 }
 
 function RootLayout() {
-  const { aiEnabled } = Route.useLoaderData()
+  const { aiEnabled, lat } = Route.useLoaderData()
   return (
-    <GardenProvider aiEnabled={aiEnabled}>
-      <Decor />
-      <div className="app">
-        <AppHeader />
-        <Outlet />
-      </div>
-      <BottomNav />
+    <GardenProvider aiEnabled={aiEnabled} lat={lat}>
+      <ChatProvider>
+        <Decor />
+        <div className="app">
+          <AppHeader />
+          <Outlet />
+        </div>
+        <ChatSheet />
+        <BottomNav />
+      </ChatProvider>
     </GardenProvider>
   )
 }

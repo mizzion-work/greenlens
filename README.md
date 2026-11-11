@@ -9,6 +9,10 @@ Take a photo of an empty balcony, yard or rooftop. GreenLens AI then:
 3. **Edits your real photo** (Gemini image model) so you can compare Before/After with a slider.
 4. **Estimates impact**: cooling, PM2.5 capture, leaf area and budget. It also shows live PM2.5, temperature and UV for your area from Open-Meteo.
 5. Links to Shopee/Lazada for each plant and to nurseries near you on Google Maps.
+6. **Sun direction**: tell it which way the balcony faces (or use the phone compass) and a sun-path model for Thailand estimates direct-sun hours and sets the light level.
+7. **สวนของฉัน (My Plants)**: every generated garden is saved on the device (IndexedDB, up to 30), no login.
+8. **เคล็ดลับ (Tips)**: care guide for all 15 plants plus balcony, watering, season, PM2.5 and pet tips.
+9. **ถาม AI (plant-advisor chat)**: a floating chat on every screen. Users ask about plants they already own (they can attach a photo), and Gemini answers using their space (type, facing, light, size, pets) and the recommended list, suggesting reuse before buying.
 
 Everything runs in **one Cloudflare Worker**: TanStack Start renders the pages, and its server functions call Gemini and Open-Meteo. There is no separate backend and no database.
 
@@ -54,6 +58,7 @@ Non-secret settings live in `wrangler.jsonc`:
 | `GEMINI_TEXT_MODEL` | `gemini-3.6-flash` | Analyses the space (JSON output) |
 | `GENERATE_LIMITER` | 4 / minute / IP | Workers rate-limit binding for image generation |
 | `ANALYZE_LIMITER` | 12 / minute / IP | Rate limit for analysis |
+| `CHAT_LIMITER` | 10 / minute / IP | Rate limit for the AI chat |
 
 Gemini model names change often. If calls start failing with 404, check <https://aistudio.google.com/docs/models> and update the two vars.
 
@@ -72,9 +77,15 @@ src/
   server/
     gemini.ts       tiny REST client + response parsing
     functions.ts    TanStack server functions (run inside the Worker)
+  lib/sun.ts        sun-path model: facing + latitude -> direct-sun hours
+  lib/care.ts       care guides and general tips
+  lib/chat.ts       chat system prompt, history trimming, reply formatting
   client/image.ts   resize/strip-EXIF, sample photo, on-device preview
+  client/gardens-db.ts  "My Plants" storage (IndexedDB)
+  client/compass.ts phone compass reading
   state/garden.tsx  app state (React context, persisted to sessionStorage)
-  routes/           /  (capture) · /result (before/after) · /plan (impact) · /about
+  routes/           /  (capture) · /result (before/after) · /plan (impact)
+                    /garden (my plants) · /tips · /about
 ```
 
 ## Privacy

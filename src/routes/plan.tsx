@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowRight,
+  BookOpen,
+  ChevronRight,
+  MessageCircleQuestion,
   Check,
   ClipboardCopy,
   Coins,
@@ -24,6 +27,7 @@ import { estimateImpact } from '../lib/impact'
 import { formatBaht, lazadaUrl, nurseriesMapUrl, shopeeUrl } from '../lib/links'
 import { getPlant, LIGHT_LABEL, SPACE_LABEL, WATER_LABEL } from '../lib/plants'
 import { getLocalConditions, type LocalConditions } from '../server/functions'
+import { useChat } from '../state/chat'
 import { useGarden } from '../state/garden'
 
 export const Route = createFileRoute('/plan')({
@@ -35,6 +39,7 @@ type Coords = { lat: number; lon: number }
 
 function PlanPage() {
   const g = useGarden()
+  const chat = useChat()
   const navigate = useNavigate()
   const [conditions, setConditions] = useState<LocalConditions | null>(null)
   const [coords, setCoords] = useState<Coords | null>(null)
@@ -226,6 +231,9 @@ function PlanPage() {
                 </span>
               )}
             </div>
+            <Link to="/tips" search={{ plant: plant.id }} className="text-btn">
+              <BookOpen size={14} /> วิธีดูแล{plant.nameTh}
+            </Link>
             <div className="pc-foot">
               <span className="price">
                 {formatBaht(plant.priceTHB[0])}–{formatBaht(plant.priceTHB[1])} / กระถาง
@@ -247,6 +255,25 @@ function PlanPage() {
           ))}
         </div>
       )}
+
+      <button
+        type="button"
+        className="soft-action"
+        onClick={() =>
+          chat.openChat(
+            `ฉันมีต้น… อยู่แล้ว ใช้แทนต้นไม้ในรายการ (${rows.map((r) => r.plant.nameTh).join(', ')}) ได้ไหม`,
+          )
+        }
+      >
+        <span className="sa-icon">
+          <MessageCircleQuestion size={19} />
+        </span>
+        <span>
+          <b>มีต้นไม้อยู่แล้ว?</b>
+          <small>ถาม AI ว่าใช้แทนต้นไหนได้ ไม่ต้องซื้อใหม่ทุกต้น</small>
+        </span>
+        <ChevronRight size={20} className="sa-end" />
+      </button>
 
       <div className="section-head">
         <h2>ค้นหาร้านค้า &amp; สั่งซื้อ</h2>

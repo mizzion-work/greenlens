@@ -9,17 +9,21 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { composePreview, type PreparedImage } from '../client/image'
+import { getGarden, saveGarden, type SavedResult } from '../client/gardens-db'
+import { composePreview, makeThumb, type PreparedImage } from '../client/image'
 import type { SpaceAnalysis } from '../lib/prompts'
 import { recommend } from '../lib/recommend'
+import { DEFAULT_LAT, estimateSun } from '../lib/sun'
 import type { GardenPlan, SpaceInput } from '../lib/types'
 import { analyzeSpace, generateGarden, type FailureCode } from '../server/functions'
 
-export interface GardenResult {
-  image: string
-  source: 'ai' | 'preview'
-  /** Why we fell back to the on-device preview, if we did. */
-  fallbackReason?: FailureCode
+/** `fallbackReason` says why we fell back to the on-device preview, if we did. */
+export type GardenResult = SavedResult
+
+function newId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
 export type AnalysisState =
@@ -34,6 +38,8 @@ interface State {
   analysis: AnalysisState
   plan: GardenPlan | null
   result: GardenResult | null
+  /** Id of this garden in "สวนของฉัน"; one per photo. */
+  currentId: string | null
 }
 
 type Action =
@@ -42,6 +48,7 @@ type Action =
   | { type: 'input'; patch: Partial<SpaceInput> }
   | { type: 'analysis'; analysis: AnalysisState }
   | { type: 'result'; plan: GardenPlan; result: GardenResult }
+  | { type: 'open'; state: Pick<State, 'photo' | 'input' | 'plan' | 'result' | 'currentId'> }
   | { type: 'reset' }
 
 export const DEFAULT_INPUT: SpaceInput = {
@@ -50,6 +57,7 @@ export const DEFAULT_INPUT: SpaceInput = {
   size: 'S',
   hasPets: false,
   beginner: true,
+  facing: null,
 }
 
 const INITIAL: State = {
@@ -58,6 +66,7 @@ const INITIAL: State = {
   analysis: { status: 'idle' },
   plan: null,
   result: null,
+  currentId: null,
 }
 
 function reducer(state: State, a: Action): State {
@@ -65,19 +74,31 @@ function reducer(state: State, a: Action): State {
     case 'restore':
       return a.state
     case 'photo':
-      return { ...state, photo: a.photo, analysis: { status: 'idle' }, plan: null, result: null }
+      return {
+        ...state,
+        photo: a.photo,
+        analysis: { status: 'idle' },
+        plan: null,
+        result: null,
+        currentId: newId(),
+      }
     case 'input':
       return { ...state, input: { ...state.input, ...a.patch } }
     case 'analysis': {
       const next = { ...state, analysis: a.analysis }
       if (a.analysis.status === 'done' && a.analysis.analysis.isOutdoorSpace) {
         const { spaceType, light, size } = a.analysis.analysis
-        next.input = { ...state.input, spaceType, light, size }
+        // A known facing gives a better sunlight estimate than the photo does.
+        next.input = state.input.facing
+          ? { ...state.input, spaceType, size }
+          : { ...state.input, spaceType, light, size }
       }
       return next
     }
     case 'result':
       return { ...state, plan: a.plan, result: a.result }
+    case 'open':
+      return { ...state, ...a.state, analysis: { status: 'idle' } }
     case 'reset':
       return INITIAL
   }
@@ -116,16 +137,29 @@ function save(state: State) {
 interface GardenContextValue extends State {
   hydrated: boolean
   aiEnabled: boolean
+  /** Latitude used for sun-hour estimates. */
+  lat: number
   generating: boolean
   setPhoto: (photo: PreparedImage) => void
   setInput: (patch: Partial<SpaceInput>) => void
   generate: (variant?: number) => Promise<boolean>
+  /** Load a garden from "สวนของฉัน" as the current one. */
+  openSaved: (id: string) => Promise<boolean>
   reset: () => void
 }
 
 const GardenContext = createContext<GardenContextValue | null>(null)
 
-export function GardenProvider({ aiEnabled, children }: { aiEnabled: boolean; children: ReactNode }) {
+export function GardenProvider({
+  aiEnabled,
+  lat: latProp,
+  children,
+}: {
+  aiEnabled: boolean
+  lat: number | null
+  children: ReactNode
+}) {
+  const lat = latProp ?? DEFAULT_LAT
   const [state, dispatch] = useReducer(reducer, INITIAL)
   const [hydrated, setHydrated] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -155,16 +189,31 @@ export function GardenProvider({ aiEnabled, children }: { aiEnabled: boolean; ch
             type: 'analysis',
             analysis: r.ok ? { status: 'done', analysis: r.analysis } : { status: 'error', code: r.code },
           })
+          // The photo may change the space type; re-derive sunlight from the known facing.
+          const facing = stateRef.current.input.facing
+          if (r.ok && r.analysis.isOutdoorSpace && facing) {
+            dispatch({ type: 'input', patch: { light: estimateSun(r.analysis.spaceType, facing, lat).light } })
+          }
         })
         .catch(() => {
           if (stateRef.current.photo?.dataUrl !== photo.dataUrl) return
           dispatch({ type: 'analysis', analysis: { status: 'error', code: 'failed' } })
         })
     },
-    [aiEnabled],
+    [aiEnabled, lat],
   )
 
-  const setInput = useCallback((patch: Partial<SpaceInput>) => dispatch({ type: 'input', patch }), [])
+  const setInput = useCallback(
+    (patch: Partial<SpaceInput>) => {
+      const next = { ...stateRef.current.input, ...patch }
+      // Choosing a facing (or a space type with a facing set) sets sunlight from the sun path.
+      if (('facing' in patch || 'spaceType' in patch) && next.facing && !('light' in patch)) {
+        patch = { ...patch, light: estimateSun(next.spaceType, next.facing, lat).light }
+      }
+      dispatch({ type: 'input', patch })
+    },
+    [lat],
+  )
 
   const generate = useCallback(
     async (variant = 0): Promise<boolean> => {
@@ -199,6 +248,7 @@ export function GardenProvider({ aiEnabled, children }: { aiEnabled: boolean; ch
           result = { image: await composePreview(photo, plan), source: 'preview', fallbackReason }
         }
         dispatch({ type: 'result', plan, result })
+        void saveToMyGardens(stateRef.current.currentId, input, plan, photo, result)
         return true
       } catch (err) {
         console.error(err)
@@ -210,14 +260,55 @@ export function GardenProvider({ aiEnabled, children }: { aiEnabled: boolean; ch
     [aiEnabled],
   )
 
+  const openSaved = useCallback(async (id: string) => {
+    try {
+      const g = await getGarden(id)
+      if (!g) return false
+      dispatch({
+        type: 'open',
+        state: { photo: g.photo, input: { ...DEFAULT_INPUT, ...g.input }, plan: g.plan, result: g.result, currentId: g.id },
+      })
+      return true
+    } catch {
+      return false
+    }
+  }, [])
+
   const reset = useCallback(() => dispatch({ type: 'reset' }), [])
 
   const value = useMemo(
-    () => ({ ...state, hydrated, aiEnabled, generating, setPhoto, setInput, generate, reset }),
-    [state, hydrated, aiEnabled, generating, setPhoto, setInput, generate, reset],
+    () => ({ ...state, hydrated, aiEnabled, lat, generating, setPhoto, setInput, generate, openSaved, reset }),
+    [state, hydrated, aiEnabled, lat, generating, setPhoto, setInput, generate, openSaved, reset],
   )
 
   return <GardenContext.Provider value={value}>{children}</GardenContext.Provider>
+}
+
+/** Save (or update) this photo's garden in "สวนของฉัน". Never throws. */
+async function saveToMyGardens(
+  id: string | null,
+  input: SpaceInput,
+  plan: GardenPlan,
+  photo: PreparedImage,
+  result: GardenResult,
+) {
+  try {
+    const now = Date.now()
+    const existing = id ? await getGarden(id) : null
+    await saveGarden({
+      id: id ?? newId(),
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      input,
+      plan,
+      photo,
+      result,
+      thumb: await makeThumb(result.image),
+    })
+  } catch (err) {
+    // Private browsing or storage full: the garden still works, it just isn't kept.
+    console.warn('Could not save garden', err)
+  }
 }
 
 export function useGarden(): GardenContextValue {

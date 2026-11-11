@@ -7,15 +7,15 @@ export function SelectField<T extends string>({
   value,
   options,
   onChange,
-  aiSuggested,
+  tag,
 }: {
   label: string
   Icon: LucideIcon
   value: T
   options: { value: T; label: string }[]
   onChange: (v: T) => void
-  /** Show an "AI แนะนำ" tag when the current value came from the photo analysis. */
-  aiSuggested?: boolean
+  /** Small tag saying where the current value came from, e.g. "AI แนะนำ". */
+  tag?: string | null
 }) {
   const id = useId()
   return (
@@ -23,9 +23,9 @@ export function SelectField<T extends string>({
       <label htmlFor={id}>
         <Icon size={17} strokeWidth={2} />
         {label}
-        {aiSuggested && (
+        {tag && (
           <span className="ai-tag">
-            <Sparkles size={11} /> AI แนะนำ
+            <Sparkles size={11} /> {tag}
           </span>
         )}
       </label>

@@ -4,6 +4,7 @@ export type SpaceSize = 'S' | 'M' | 'L'
 export type PlantSize = 'S' | 'M' | 'L'
 export type Water = 'low' | 'medium' | 'high'
 export type Care = 'easy' | 'medium'
+export type Facing = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW'
 
 export interface SpaceInput {
   spaceType: SpaceType
@@ -11,6 +12,8 @@ export interface SpaceInput {
   size: SpaceSize
   hasPets: boolean
   beginner: boolean
+  /** Which way the open side faces, if the user told us. */
+  facing?: Facing | null
 }
 
 export interface Plant {

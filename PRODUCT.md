@@ -29,6 +29,7 @@ Used on a phone, standing in the space being photographed (balcony or yard), usu
 - AI edits the real photo; if unavailable, an on-device simulated preview.
 - Estimates of temperature drop, PM2.5, leaf area and budget are estimates, not measurements, and must say so.
 - Live air quality from Open-Meteo; links to Shopee, Lazada and Google Maps.
+- An AI chat for advice on plants the user already owns, so they don't have to buy everything new (suggested by the instructor).
 - Deployed as a single Cloudflare Worker (TanStack Start). No accounts and no database.
 
 ## Brand Commitments

@@ -37,6 +37,11 @@
 			"name": "ANALYZE_LIMITER",
 			"namespace_id": "41002",
 			"simple": { "limit": 12, "period": 60 }
+		},
+		{
+			"name": "CHAT_LIMITER",
+			"namespace_id": "41003",
+			"simple": { "limit": 10, "period": 60 }
 		}
 	]
 }

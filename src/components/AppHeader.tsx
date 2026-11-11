@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { House, Info, Lightbulb, Menu, RotateCcw, Sprout, X } from 'lucide-react'
+import { ClipboardList, House, Images, Info, Lightbulb, Menu, RotateCcw, Sprout, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useGarden } from '../state/garden'
 import { AppIcon } from './art'
@@ -52,13 +52,19 @@ export function AppHeader() {
           {g.result && (
             <>
               <Link to="/result" onClick={close}>
-                <Sprout size={18} /> สวนของฉัน
+                <Images size={18} /> ภาพก่อน/หลังล่าสุด
               </Link>
               <Link to="/plan" onClick={close}>
-                <Lightbulb size={18} /> ผลลัพธ์และต้นไม้
+                <ClipboardList size={18} /> ผลลัพธ์และรายการต้นไม้
               </Link>
             </>
           )}
+          <Link to="/garden" onClick={close}>
+            <Sprout size={18} /> สวนของฉัน
+          </Link>
+          <Link to="/tips" onClick={close}>
+            <Lightbulb size={18} /> เคล็ดลับดูแลต้นไม้
+          </Link>
           <Link to="/about" onClick={close}>
             <Info size={18} /> เกี่ยวกับ GreenLens
           </Link>

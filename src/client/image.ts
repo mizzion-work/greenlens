@@ -116,6 +116,17 @@ export async function composePreview(photo: PreparedImage, plan: GardenPlan): Pr
   return canvas.toDataURL('image/jpeg', QUALITY)
 }
 
+/** Small JPEG for the "สวนของฉัน" list. */
+export async function makeThumb(dataUrl: string, maxDim = 360): Promise<string> {
+  const img = await loadImage(dataUrl)
+  const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight))
+  const W = Math.max(1, Math.round(img.naturalWidth * scale))
+  const H = Math.max(1, Math.round(img.naturalHeight * scale))
+  const [canvas, ctx] = toCanvas(W, H)
+  ctx.drawImage(img, 0, 0, W, H)
+  return canvas.toDataURL('image/jpeg', 0.8)
+}
+
 export function dataUrlToBlob(dataUrl: string): Blob {
   const [head, body] = dataUrl.split(',')
   const mime = /data:([^;]+)/.exec(head)?.[1] ?? 'image/jpeg'

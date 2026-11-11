@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as GardenRouteImport } from './routes/garden'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ResultRouteImport } from './routes/result'
+import { Route as TipsRouteImport } from './routes/tips'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GardenRoute = GardenRouteImport.update({
+  id: '/garden',
+  path: '/garden',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanRoute = PlanRouteImport.update({
@@ -34,39 +41,52 @@ const ResultRoute = ResultRouteImport.update({
   path: '/result',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TipsRoute = TipsRouteImport.update({
+  id: '/tips',
+  path: '/tips',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/garden': typeof GardenRoute
   '/plan': typeof PlanRoute
   '/result': typeof ResultRoute
+  '/tips': typeof TipsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/garden': typeof GardenRoute
   '/plan': typeof PlanRoute
   '/result': typeof ResultRoute
+  '/tips': typeof TipsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/garden': typeof GardenRoute
   '/plan': typeof PlanRoute
   '/result': typeof ResultRoute
+  '/tips': typeof TipsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/plan' | '/result'
+  fullPaths: '/' | '/about' | '/garden' | '/plan' | '/result' | '/tips'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/plan' | '/result'
-  id: '__root__' | '/' | '/about' | '/plan' | '/result'
+  to: '/' | '/about' | '/garden' | '/plan' | '/result' | '/tips'
+  id: '__root__' | '/' | '/about' | '/garden' | '/plan' | '/result' | '/tips'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  GardenRoute: typeof GardenRoute
   PlanRoute: typeof PlanRoute
   ResultRoute: typeof ResultRoute
+  TipsRoute: typeof TipsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -85,6 +105,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/garden': {
+      id: '/garden'
+      path: '/garden'
+      fullPath: '/garden'
+      preLoaderRoute: typeof GardenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plan': {
       id: '/plan'
       path: '/plan'
@@ -99,14 +126,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tips': {
+      id: '/tips'
+      path: '/tips'
+      fullPath: '/tips'
+      preLoaderRoute: typeof TipsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  GardenRoute: GardenRoute,
   PlanRoute: PlanRoute,
   ResultRoute: ResultRoute,
+  TipsRoute: TipsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

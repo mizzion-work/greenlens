@@ -3,6 +3,7 @@ import { getRequest, getRequestHeader } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { z } from 'zod'
 import { nearestAspectRatio } from '../lib/aspect'
+import { buildChatSystemPrompt, toGeminiContents } from '../lib/chat'
 import { PLANT_BY_ID } from '../lib/plants'
 import {
   ANALYSIS_PROMPT,
@@ -76,7 +77,13 @@ const ImageInput = z
 /* ------------------------------------------------------------------ */
 
 export const getAiStatus = createServerFn({ method: 'GET' }).handler(async () => {
-  return { aiEnabled: apiKey() !== null }
+  // Approximate latitude from Cloudflare's request geolocation, for sun-hour estimates.
+  const cf = (getRequest() as Request & { cf?: IncomingRequestCfProperties }).cf
+  const lat = Number(cf?.latitude)
+  return {
+    aiEnabled: apiKey() !== null,
+    lat: Number.isFinite(lat) && lat !== 0 ? lat : null,
+  }
 })
 
 /* ------------------------------------------------------------------ */
@@ -268,5 +275,78 @@ export const getLocalConditions = createServerFn({ method: 'POST' })
       pm25: num(aq?.current?.pm2_5),
       tempC: num(wx?.current?.temperature_2m),
       uvIndex: num(wx?.current?.uv_index),
+    }
+  })
+
+/* ------------------------------------------------------------------ chat */
+
+const ChatInput = z.object({
+  messages: z
+    .array(
+      z.object({
+        id: z.string().max(64),
+        role: z.enum(['user', 'model']),
+        text: z.string().max(2000),
+        image: ImageInput.optional(),
+      }),
+    )
+    .min(1)
+    .max(40),
+  input: z
+    .object({
+      spaceType: z.enum(['balcony', 'yard', 'rooftop']),
+      light: z.enum(['full', 'part', 'shade']),
+      size: z.enum(['S', 'M', 'L']),
+      hasPets: z.boolean(),
+      beginner: z.boolean(),
+      facing: z.enum(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']).nullable().optional(),
+    })
+    .optional(),
+  planItems: z
+    .array(
+      z.object({
+        plantId: z.string().refine((id) => id in PLANT_BY_ID, 'Unknown plant'),
+        count: z.number().int().min(1).max(12),
+      }),
+    )
+    .max(4)
+    .optional(),
+})
+
+export type ChatResult = { ok: true; text: string } | Failure
+
+/** Plant advisor chat: answers about the user's space and plants they already own. */
+export const askAssistant = createServerFn({ method: 'POST' })
+  .validator(ChatInput)
+  .handler(async ({ data }): Promise<ChatResult> => {
+    const key = apiKey()
+    if (!key) return { ok: false, code: 'not-configured' }
+    if (await overLimit(env.CHAT_LIMITER)) return { ok: false, code: 'rate-limited' }
+
+    const system = buildChatSystemPrompt({
+      input: data.input,
+      plan: data.planItems?.length ? { items: data.planItems, variant: 0 } : null,
+    })
+
+    try {
+      const resp = await generateContent({
+        apiKey: key,
+        model: env.GEMINI_TEXT_MODEL || DEFAULT_TEXT_MODEL,
+        timeoutMs: 45_000,
+        body: {
+          systemInstruction: { parts: [{ text: system }] },
+          contents: toGeminiContents(data.messages),
+          generationConfig: { temperature: 0.6, maxOutputTokens: 2048 },
+        },
+      })
+      if (wasBlocked(resp)) return { ok: false, code: 'blocked' }
+      const text = extractText(resp)
+      if (!text) {
+        console.error('askAssistant: empty reply', JSON.stringify(resp).slice(0, 300))
+        return { ok: false, code: 'failed' }
+      }
+      return { ok: true, text }
+    } catch (err) {
+      return failureFrom(err, 'askAssistant')
     }
   })

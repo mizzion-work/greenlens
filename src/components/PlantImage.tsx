@@ -1,7 +1,7 @@
 import { PLANT_ART } from '../lib/plant-art'
 
 /** Plants that have a real photo in public/plants/<id>.webp. Others use the illustration. */
-const PHOTOS = new Set(['snake', 'rubber', 'pothos', 'areca', 'aloe'])
+const PHOTOS = new Set(['snake', 'rubber', 'pothos', 'areca', 'aloe', 'fern'])
 
 export function PlantImage({ id, alt }: { id: string; alt: string }) {
   return (
